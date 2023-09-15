@@ -1,34 +1,54 @@
-use bevy::prelude::*;
-mod player;
-use player::PlayerPlugin;
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+    window::PresentMode,
+};
+use big_space::{FloatingOriginPlugin, GridCell};
+
+mod camera;
+mod speed;
 
 fn main() {
-    println!("Hello, world!");
     App::new()
-        .add_plugins((DefaultPlugins, PlayerPlugin))
-        .add_systems(Startup, (spawn_floor, spawn_camera, spawn_light))
+        .add_plugins((
+            DefaultPlugins.build().disable::<TransformPlugin>(),
+            FloatingOriginPlugin::<i64>::new(100.0, 10.0),
+            camera::CameraPlugin,
+            LogDiagnosticsPlugin::default(),
+            FrameTimeDiagnosticsPlugin::default(),
+        ))
+        .add_systems(Startup, (spawn_floor, spawn_light))
+        .add_systems(Update, toggle_vsync)
         .run();
 }
 
-fn spawn_light(mut commands: Commands) {
-    let light = PointLightBundle {
-        point_light: PointLight {
-            intensity: 2000.0,
-            ..default()
-        },
-        transform: Transform::from_xyz(0.0, 5.0, 0.0),
-        ..default()
-    };
+fn toggle_vsync(input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>) {
+    if input.just_pressed(KeyCode::V) {
+        let mut window = windows.single_mut();
 
-    commands.spawn(light);
+        window.present_mode = if matches!(window.present_mode, PresentMode::AutoVsync) {
+            PresentMode::AutoNoVsync
+        } else {
+            PresentMode::AutoVsync
+        };
+        info!("PRESENT_MODE: {:?}", window.present_mode);
+    }
 }
 
-fn spawn_camera(mut commands: Commands) {
-    let camera = Camera3dBundle {
-        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    };
-    commands.spawn(camera);
+fn spawn_light(mut commands: Commands) {
+    let light = (
+        GridCell::<i64>::new(0, 0, 0),
+        PointLightBundle {
+            point_light: PointLight {
+                intensity: 2000.0,
+                ..default()
+            },
+            transform: Transform::from_xyz(0.0, 5.0, 0.0),
+            ..default()
+        },
+    );
+
+    commands.spawn(light);
 }
 
 fn spawn_floor(
@@ -36,11 +56,14 @@ fn spawn_floor(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let floor = PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane::from_size(15.0))),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        ..default()
-    };
+    let floor = (
+        GridCell::<i64>::new(0, 0, 0),
+        PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Plane::from_size(15.0))),
+            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+            ..default()
+        },
+    );
 
     commands.spawn(floor);
 }

@@ -302,6 +302,7 @@ name = "bevy-experiment"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "big_space",
 ]
 
 [[package]]
@@ -1020,6 +1021,15 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
  "winit",
+]
+
+[[package]]
+name = "big_space"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "893ba33ee70aa50ddcbc8f8028e5abe77382711ef2bcf65d8cd28034ca803c6a"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]
