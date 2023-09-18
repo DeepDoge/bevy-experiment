@@ -16,9 +16,9 @@ if [ ! -f ~/.ssh/id_rsa ]; then
   ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
 fi
 
-# Copy the public key to the remote host if not already done
+# Copy the public key to the local host if not already done
 ssh-copy-id -i ~/.ssh/id_rsa.pub ${REMOTE_ADDRESS} >/dev/null 2>&1
 
-# Run the program on the remote host
+# Run the program on the local host
 ssh ${REMOTE_ADDRESS} \
     "DISPLAY=${HOST_DISPLAY} ${HOST_WORKSPACE}/target/debug/$(basename "${HOST_WORKSPACE}")"
