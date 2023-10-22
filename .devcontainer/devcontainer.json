@@ -15,7 +15,8 @@
 	"containerEnv": {
 		"HOST_USER": "${localEnv:USER}",
 		"HOST_WORKSPACE": "${localWorkspaceFolder}",
-		"HOST_DISPLAY": "${localEnv:DISPLAY}"
+		"HOST_DISPLAY": "${localEnv:DISPLAY}",
+		"HOST_XAUTHORITY": "${localEnv:XAUTHORITY}"
 	},
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},

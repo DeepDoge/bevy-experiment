@@ -3,4 +3,5 @@ FROM mcr.microsoft.com/devcontainers/rust:1-1-bullseye
 # Install Dependencies
 RUN apt-get update && apt-get install -y \
     libudev-dev \
-    libasound2-dev
+    libasound2-dev \
+    lld

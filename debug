@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Build the project
-cargo rustc -r
+cargo rustc
 
 # Check if the build was successful, otherwise exit
 if [ $? -ne 0 ]; then
@@ -21,4 +21,4 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub ${REMOTE_ADDRESS} >/dev/null 2>&1
 
 # Run the program on the local host
 ssh ${REMOTE_ADDRESS} \
-    "XAUTHORITY=${HOST_XAUTHORITY} DISPLAY=${HOST_DISPLAY} ${HOST_WORKSPACE}/target/release/$(basename "${HOST_WORKSPACE}")"
+    "XAUTHORITY=${HOST_XAUTHORITY} DISPLAY=${HOST_DISPLAY} ${HOST_WORKSPACE}/target/debug/$(basename "${HOST_WORKSPACE}")"
