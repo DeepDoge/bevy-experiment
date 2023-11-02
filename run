@@ -1,5 +1,7 @@
 #!/bin/bash
 
+TARGET="release"
+
 # Build the project
 cargo rustc -r
 
@@ -7,6 +9,17 @@ cargo rustc -r
 if [ $? -ne 0 ]; then
     exit 1
 fi
+
+# watch and copy assets
+update_assets() {
+    rm -rf ./target/${TARGET}/assets
+    cp -r assets target/${TARGET}/
+}
+update_assets
+fswatch -o assets | while read; do update_assets; done &
+
+# Save the PID of the last background process
+watch_pid=$!
 
 # Get the host user and ip address
 REMOTE_ADDRESS="${HOST_USER}@$(ip route | grep default | awk '{print $3}')"
@@ -21,4 +34,7 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub ${REMOTE_ADDRESS} >/dev/null 2>&1
 
 # Run the program on the local host
 ssh ${REMOTE_ADDRESS} \
-    "XAUTHORITY=${HOST_XAUTHORITY} DISPLAY=${HOST_DISPLAY} ${HOST_WORKSPACE}/target/release/$(basename "${HOST_WORKSPACE}")"
+    "XAUTHORITY=${HOST_XAUTHORITY} DISPLAY=${HOST_DISPLAY} ${HOST_WORKSPACE}/target/${TARGET}/$(basename "${HOST_WORKSPACE}")"
+
+# Stop the watch command
+kill $watch_pid

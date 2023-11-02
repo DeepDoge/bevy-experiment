@@ -1,9 +1,23 @@
+use std::time::Duration;
+
 use bevy::{
+    asset::ChangeWatcher,
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    math::vec2,
+    pbr::{MaterialPipeline, MaterialPipelineKey},
     prelude::*,
+    reflect::{TypePath, TypeUuid},
+    render::{
+        mesh::MeshVertexBufferLayout,
+        render_resource::{
+            AsBindGroup, RawRenderPipelineDescriptor, RenderPipelineDescriptor, ShaderRef,
+            SpecializedMeshPipelineError,
+        },
+    },
     window::PresentMode,
 };
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_shader_utils::ShaderUtilsPlugin;
 use big_space::{FloatingOriginPlugin, GridCell};
 
 mod camera;
@@ -15,51 +29,83 @@ const SWITCHING_THRESHOLD: f32 = GRID_EDGE_LENGTH * 0.5;
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins.build().disable::<TransformPlugin>(),
+            DefaultPlugins
+                .build()
+                .disable::<TransformPlugin>()
+                .set(AssetPlugin {
+                    watch_for_changes: ChangeWatcher::with_delay(Duration::from_millis(200)),
+                    ..default()
+                }),
+            ShaderUtilsPlugin,
+            MaterialPlugin::<CustomMaterial>::default(),
             FloatingOriginPlugin::<i64>::new(GRID_EDGE_LENGTH, SWITCHING_THRESHOLD),
             camera::CameraPlugin,
             LogDiagnosticsPlugin::default(),
             FrameTimeDiagnosticsPlugin::default(),
-            #[cfg(debug_assertions)]
             WorldInspectorPlugin::new(),
         ))
-        .add_systems(Startup, (setup, spawn_floor, test))
+        .add_systems(Startup, setup)
         .add_systems(Update, toggle_vsync)
         .run();
 }
 
-fn setup(mut ambient_light: ResMut<AmbientLight>) {
-    ambient_light.color = Color::WHITE;
-    ambient_light.brightness = 1.0;
-}
-
-fn test(
+fn setup(
+    mut ambient_light: ResMut<AmbientLight>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    player_query: Query<&GridCell<i64>, With<Camera>>,
+    mut custom_materials: ResMut<Assets<CustomMaterial>>,
 ) {
-    let player_cell = *player_query.single();
+    ambient_light.color = Color::WHITE;
+    ambient_light.brightness = 1.0;
 
-    let material = materials.add(Color::rgb(0.5, 0.5, 1.0).into());
+    let quad_mesh = meshes.add(Mesh::from(shape::Plane {
+        size: 1.0,
+        subdivisions: 0,
+        ..default()
+    }));
 
-    for x in -5..5 {
-        for y in -5..5 {
-            for z in -5..5 {
-                let sphere = (
-                    GridCell::<i64>::from(player_cell + GridCell::new(x, y, z)),
-                    PbrBundle {
-                        mesh: meshes.add(Mesh::from(shape::Quad::default())),
-                        material: material.clone(),
-                        transform: Transform::from_xyz(50_000.0, 50_000.0, 50_000.0)
-                            .with_scale(Vec3::splat(50_000.0)),
-                        ..default()
-                    },
-                );
+    // Shell Texturing Test
+    let shell_count = 64;
+    let size = 10_000.0;
+    for i in 0..shell_count {
+        let local_height = i as f32 / shell_count as f32;
+        let quad = (
+            GridCell::<i64>::ZERO,
+            MaterialMeshBundle {
+                mesh: quad_mesh.clone(),
+                transform: Transform {
+                    translation: Vec3::ZERO,
+                    rotation: Quat::IDENTITY,
+                    scale: Vec3::new(size, 1.0, size),
+                },
+                material: custom_materials.add(CustomMaterial {
+                    height: local_height,
+                    size,
+                }),
+                ..default()
+            },
+        );
 
-                commands.spawn(sphere);
-            }
-        }
+        commands.spawn(quad);
+    }
+}
+
+#[derive(AsBindGroup, TypeUuid, TypePath, Debug, Clone)]
+#[uuid = "a3d71c04-d054-4946-80f8-ba6cfbc90cad"]
+struct CustomMaterial {
+    #[uniform(0)]
+    height: f32,
+    #[uniform(1)]
+    size: f32,
+}
+
+impl Material for CustomMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/grass_test.wgsl".into()
+    }
+
+    fn vertex_shader() -> ShaderRef {
+        "shaders/grass_test.wgsl".into()
     }
 }
 
@@ -74,21 +120,4 @@ fn toggle_vsync(input: Res<Input<KeyCode>>, mut windows: Query<&mut Window>) {
 
         info!("PRESENT_MODE: {:?}", window.present_mode);
     }
-}
-
-fn spawn_floor(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    let floor = (
-        GridCell::<i64>::new(0, 0, 0),
-        PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Plane::from_size(15.0))),
-            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-            ..default()
-        },
-    );
-
-    commands.spawn(floor);
 }

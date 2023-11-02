@@ -328,6 +328,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",
+ "bevy_shader_utils",
  "big_space",
 ]
 
@@ -912,6 +913,15 @@ dependencies = [
  "serde",
  "thiserror",
  "uuid",
+]
+
+[[package]]
+name = "bevy_shader_utils"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b18b5d84e74ec45ebc6c20fdcf2e9c4849b9037c98fb3046160c56ace36eb85"
+dependencies = [
+ "bevy",
 ]
 
 [[package]]
