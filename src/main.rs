@@ -3,17 +3,9 @@ use std::time::Duration;
 use bevy::{
     asset::ChangeWatcher,
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    math::vec2,
-    pbr::{MaterialPipeline, MaterialPipelineKey},
     prelude::*,
     reflect::{TypePath, TypeUuid},
-    render::{
-        mesh::MeshVertexBufferLayout,
-        render_resource::{
-            AsBindGroup, RawRenderPipelineDescriptor, RenderPipelineDescriptor, ShaderRef,
-            SpecializedMeshPipelineError,
-        },
-    },
+    render::render_resource::{AsBindGroup, ShaderRef},
     window::PresentMode,
 };
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -65,8 +57,8 @@ fn setup(
     }));
 
     // Shell Texturing Test
-    let shell_count = 64;
-    let size = 10_000.0;
+    let shell_count = 128;
+    let size = 16.0;
     for i in 0..shell_count {
         let local_height = i as f32 / shell_count as f32;
         let quad = (
